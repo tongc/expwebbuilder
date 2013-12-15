@@ -6,22 +6,22 @@
       <actionSet
             label="Sample Action Set"
             visible="true"
-            id="copilotEclipse.actionSet">
+            id="expwebEclipse.actionSet">
          <menu
-               label="Copilot &amp;Menu"
-               id="copilot">
+               label="Expweb &amp;Menu"
+               id="expweb">
             <separator
                   name="sampleGroup">
             </separator>
          </menu>
          <action
-               label="&amp;Copilot"
+               label="&amp;Expweb"
                icon="icons/sample.gif"
-               class="com.expedia.copilot.eclipse.CoPilot"
-               tooltip="Hello Copilot"
-               menubarPath="copilot/sampleGroup"
+               class="com.expedia.expweb.eclipse.ExpBuilder"
+               tooltip="Hello Expweb"
+               menubarPath="expweb/sampleGroup"
                toolbarPath="sampleGroup"
-               id="simplemenu.actions.Copilot">
+               id="simplemenu.actions.Expweb">
          </action>
       </actionSet>
    </extension>
