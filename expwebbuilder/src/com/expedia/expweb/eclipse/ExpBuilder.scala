@@ -23,15 +23,16 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore
 import org.eclipse.core.runtime.preferences.InstanceScope
 
 class ExpBuilder extends IWorkbenchWindowActionDelegate {
-  var window: Option[IWorkbenchWindow] = None;
+  var window: Option[IWorkbenchWindow] = None
 
   @Override
   def run(action: IAction) {
-    val ws: IWorkspace = ResourcesPlugin.getWorkspace();
-    val desc: IWorkspaceDescription = ws.getDescription();
-    desc.setAutoBuilding(false);
+    val ws: IWorkspace = ResourcesPlugin.getWorkspace()
+    val desc: IWorkspaceDescription = ws.getDescription()
+    val autoBuildConf = desc.isAutoBuilding()
+    desc.setAutoBuilding(false)
     try {
-      ws.setDescription(desc);
+      ws.setDescription(desc)
     } catch {
       case ex: CoreException => {
         ex.printStackTrace()
@@ -48,9 +49,12 @@ class ExpBuilder extends IWorkbenchWindowActionDelegate {
     }
 
     try {
-      cleanAndBuild(ws, "platform");
-      cleanAndBuild(ws, "dataaccess");
-      cleanAndBuild(ws, "domain");
+      cleanAndBuild(ws, "platform", false)
+      cleanAndBuild(ws, "dataaccess", false)
+      cleanAndBuild(ws, "domain", true)
+      cleanAndBuild(ws, "webdomain-api", false)
+      cleanAndBuild(ws, "checkout.ui", true)
+      cleanAndBuild(ws, "stub", false)
     } catch {
       case ex: BackingStoreException => {
         ex.printStackTrace()
@@ -60,21 +64,20 @@ class ExpBuilder extends IWorkbenchWindowActionDelegate {
       }
     }
 
-    desc.setAutoBuilding(false);
+    desc.setAutoBuilding(autoBuildConf);
     try {
-      ws.setDescription(desc);
+      ws.setDescription(desc)
     } catch {
       case ex: CoreException => {
-        // TODO Auto-generated catch block
-        ex.printStackTrace();
+        ex.printStackTrace()
       }
     }
 
     new ScopedPreferenceStore(InstanceScope.INSTANCE,
-      "bundle-name-of-other-plugin");
+      "bundle-name-of-other-plugin")
   }
 
-  def cleanAndBuild(ws: IWorkspace, projectName: String) {
+  def cleanAndBuild(ws: IWorkspace, projectName: String, useScalaBuilder: Boolean) {
     val pro: IProject = ws.getRoot().getProject(projectName);
     val projectScope: IScopeContext = new ProjectScope(pro);
     val projectNode: Preferences = projectScope.getNode("org.scala-ide.sdt.core");
@@ -87,6 +90,11 @@ class ExpBuilder extends IWorkbenchWindowActionDelegate {
     projectNode.flush();
 
     pro.setDefaultCharset("UTF-8", null);
+    if(useScalaBuilder) {
+    	val builders = pro.getDescription().getBuildSpec()
+    	val newBuilders = builders.filterNot(_.getBuilderName()=="org.eclipse.jdt.core.javabuilder")
+    	pro.getDescription().setBuildSpec(newBuilders)
+    }
     for (ibc <- pro.getBuildConfigs()) {
       //logger.log(LogService.LOG_ERROR, ibc.getName());
     }
