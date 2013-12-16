@@ -53,6 +53,7 @@ class ExpBuilder extends IWorkbenchWindowActionDelegate {
       cleanAndBuild(ws, "dataaccess", false)
       cleanAndBuild(ws, "domain", true)
       cleanAndBuild(ws, "webdomain-api", false)
+      cleanAndBuild(ws, "webdomain", false)
       cleanAndBuild(ws, "checkout.ui", true)
       cleanAndBuild(ws, "stub", false)
     } catch {
@@ -92,12 +93,12 @@ class ExpBuilder extends IWorkbenchWindowActionDelegate {
     pro.setDefaultCharset("UTF-8", null);
     if(useScalaBuilder) {
     	val builders = pro.getDescription().getBuildSpec()
-    	val newBuilders = builders.filterNot(_.getBuilderName()=="org.eclipse.jdt.core.javabuilder")
-    	pro.getDescription().setBuildSpec(newBuilders)
+    	val newBuilders = builders.filterNot(_.getBuilderName() == "org.eclipse.jdt.core.javabuilder")
+    	val desc = pro.getDescription()
+    	desc.setBuildSpec(newBuilders)
+    	pro.setDescription(desc, null)
     }
-    for (ibc <- pro.getBuildConfigs()) {
-      //logger.log(LogService.LOG_ERROR, ibc.getName());
-    }
+    val builderssetornot = pro.getDescription().getBuildSpec()
     pro.build(IncrementalProjectBuilder.CLEAN_BUILD, null);
     pro.build(IncrementalProjectBuilder.FULL_BUILD, null);
   }
