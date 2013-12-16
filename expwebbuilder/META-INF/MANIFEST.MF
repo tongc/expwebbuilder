@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ExpwebBuilderEclipse
-Bundle-SymbolicName: expwebBuilderEclipse;singleton:=true
+Bundle-SymbolicName: com.expedia.expweb.expwebBuilderEclipse;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: com.expedia.expweb.eclipse.Activator
 Require-Bundle: org.eclipse.ui,
