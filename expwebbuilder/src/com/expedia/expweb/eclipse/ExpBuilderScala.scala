@@ -22,7 +22,7 @@ import org.osgi.service.prefs.BackingStoreException
 import org.eclipse.ui.preferences.ScopedPreferenceStore
 import org.eclipse.core.runtime.preferences.InstanceScope
 
-class ExpBuilder extends IWorkbenchWindowActionDelegate {
+class ExpBuilderScala extends IWorkbenchWindowActionDelegate {
   var window: Option[IWorkbenchWindow] = None
 
   @Override
