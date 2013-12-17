@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -62,6 +63,9 @@ public class ExpBuilder extends WorkspaceJob implements
 		IProgressMonitor monitor = null;
 		String eclipseGradleStr = null;
 		InputStream is;
+		ResourceAttributes ra = null;
+		boolean fileIsReadOnly = true;
+		IFile file = null;
 		
 		IWorkspaceDescription desc = ws.getDescription();
 		boolean autoBuildConf = desc.isAutoBuilding();
@@ -89,7 +93,8 @@ public class ExpBuilder extends WorkspaceJob implements
 //		}
 		
 		try {
-			is = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).getContents();
+			file = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle"));
+			is = file.getContents();
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			StringBuilder sb = new StringBuilder();
 	        String line = in.readLine();
@@ -99,21 +104,27 @@ public class ExpBuilder extends WorkspaceJob implements
 	            line = in.readLine();
 	        }
 	        eclipseGradleStr = sb.toString();
-	        String strToReplace = 
-	        	"                    if (subproject.name == 'integration.test') {" + System.getProperty("line.separator") + 
-                "                        classpathNode.classpathentry.findAll { it.@kind == 'src' }.each {" + System.getProperty("line.separator") + 
-                "                            classpathNode.remove it" + System.getProperty("line.separator") +
-                "                        }" + System.getProperty("line.separator") +
-                "                    }";
-	        String s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
-	        		"def slashedProjectRoot = \"$projectRoot\".replace('\\\\', '/')" + System.getProperty("line.separator") + 
-	        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
-	        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
-	        		"it.@path = it.@path.replaceAll('/trunk/' + subproject.name + '/build/resources/test-runtime', '/' + subproject.name + '/build/resources/test-runtime')" + System.getProperty("line.separator") + 
-	        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')" + System.getProperty("line.separator") + 
-	        		"}"
-	        		);
-			ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
+	        ra = file.getResourceAttributes();
+	        fileIsReadOnly = ra.isReadOnly();
+	        if(!eclipseGradleStr.contains("def slashedProjectRoot")) {
+	        	ra.setReadOnly(false);
+	        	file.setResourceAttributes(ra);
+		        String strToReplace = 
+		        	"                    if (subproject.name == 'integration.test') {" + System.getProperty("line.separator") + 
+	                "                        classpathNode.classpathentry.findAll { it.@kind == 'src' }.each {" + System.getProperty("line.separator") + 
+	                "                            classpathNode.remove it" + System.getProperty("line.separator") +
+	                "                        }" + System.getProperty("line.separator") +
+	                "                    }";
+		        String s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
+		        		"def slashedProjectRoot = \"$projectRoot\".replace('\\\\', '/')" + System.getProperty("line.separator") + 
+		        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
+		        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
+		        		"it.@path = it.@path.replaceAll('/trunk/' + subproject.name + '/build/resources/test-runtime', '/' + subproject.name + '/build/resources/test-runtime')" + System.getProperty("line.separator") + 
+		        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')" + System.getProperty("line.separator") + 
+		        		"}"
+		        		);
+		        file.setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
+	        }
 		} catch (CoreException e2) {
 			//most of the times, this is caused by the file is read-only. so that we just ignore this.
 			//openMsgBox("replacing classpath error: " + e2.getMessage());
@@ -147,9 +158,11 @@ public class ExpBuilder extends WorkspaceJob implements
 			e.printStackTrace();
 		}
 
-		if(eclipseGradleStr!=null) {
+		if(eclipseGradleStr!=null && eclipseGradleStr.contains("def slashedProjectRoot")) {
 			try {
-				ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).setContents(new ByteArrayInputStream(eclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
+				file.setContents(new ByteArrayInputStream(eclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
+				ra.setReadOnly(fileIsReadOnly);
+				file.setResourceAttributes(ra);
 			} catch (CoreException e) {
 				e.printStackTrace();
 			}
