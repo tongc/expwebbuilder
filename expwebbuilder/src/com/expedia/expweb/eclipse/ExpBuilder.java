@@ -14,6 +14,7 @@ import org.eclipse.core.resources.ProjectScope;
 import org.osgi.service.log.LogService;
 import org.osgi.service.prefs.Preferences;
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -22,9 +23,15 @@ import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.springsource.ide.eclipse.gradle.core.actions.RefreshAllActionCore;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +59,40 @@ public class ExpBuilder extends WorkspaceJob implements
 	public void run(IAction action) {
 		final IWorkspace ws = ResourcesPlugin.getWorkspace();
 		IProgressMonitor monitor = null;
+		String eclipseGradleStr = null;
+		InputStream is;
+		try {
+			is = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).getContents();
+			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			StringBuilder sb = new StringBuilder();
+	        String line = in.readLine();
+	        while (line != null) {
+	            sb.append(line);
+	            sb.append('\n');
+	            line = in.readLine();
+	        }
+	        eclipseGradleStr = sb.toString();
+	        String strToReplace = 
+	        	"                    if (subproject.name == 'integration.test') {" + System.getProperty("line.separator") + 
+                "                        classpathNode.classpathentry.findAll { it.@kind == 'src' }.each {" + System.getProperty("line.separator") + 
+                "                            classpathNode.remove it" + System.getProperty("line.separator") +
+                "                        }" + System.getProperty("line.separator") +
+                "                    }";
+	        String s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
+	        		"def slashedProjectRoot = '$projectRoot'.replace('\\', '/')" + System.getProperty("line.separator") + 
+	        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
+	        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
+	        		"it.@path = it.@path.replaceAll('/trunk/' + subproject.name + '/build/resources/test-runtime', '/' + subproject.name + '/build/resources/test-runtime')" + System.getProperty("line.separator") + 
+	        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')"
+	        		);
+			ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
+		} catch (CoreException e2) {
+			e2.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		
 		IWorkspaceDescription desc = ws.getDescription();
 		boolean autoBuildConf = desc.isAutoBuilding();
 		desc.setAutoBuilding(false);
@@ -91,6 +132,14 @@ public class ExpBuilder extends WorkspaceJob implements
 			e.printStackTrace();
 		}
 
+		if(eclipseGradleStr!=null) {
+			try {
+				ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).setContents(new ByteArrayInputStream(eclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		try {
 			// openMsgBox("starting platform clean build");
 			cleanAndBuild(ws, "platform", false, monitor);

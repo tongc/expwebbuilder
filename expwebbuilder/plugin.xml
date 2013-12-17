@@ -4,21 +4,17 @@
    <extension
          point="org.eclipse.ui.actionSets">
       <actionSet
-            label="Sample Action Set"
+            label="Expweb"
             visible="true"
             id="expwebEclipse.actionSet">
          <menu
                label="Expweb &amp;Menu"
                id="expweb">
-            <separator
-                  name="sampleGroup">
-            </separator>
          </menu>
          <action
-               label="&amp;Expweb"
-               icon="icons/sample.gif"
+               label="&amp;Build Expweb"
                class="com.expedia.expweb.eclipse.ExpBuilder"
-               tooltip="Hello Expweb"
+               tooltip="Build Expweb"
                menubarPath="expweb/sampleGroup"
                toolbarPath="sampleGroup"
                id="simplemenu.actions.Expweb">
