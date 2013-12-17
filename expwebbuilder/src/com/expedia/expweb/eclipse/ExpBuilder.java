@@ -127,12 +127,10 @@ public class ExpBuilder extends WorkspaceJob implements
 		        file.setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
 	        }
 		} catch (CoreException e2) {
-			//most of the times, this is caused by the file is read-only. so that we just ignore this.
-			//openMsgBox("replacing classpath error: " + e2.getMessage());
+			openMsgBox("replacing classpath error: " + e2.getMessage());
 			e2.printStackTrace();
 		} catch (IOException e) {
-			//most of the times, this is caused by the file is read-only. so that we just ignore this.
-			//openMsgBox("replacing classpath error: " + e.getMessage());
+			openMsgBox("replacing classpath error: " + e.getMessage());
 			e.printStackTrace();
 		}
 
