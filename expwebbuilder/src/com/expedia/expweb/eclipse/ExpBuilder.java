@@ -16,6 +16,7 @@ import org.osgi.service.prefs.Preferences;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.IWorkspaceDescription;
@@ -61,6 +62,32 @@ public class ExpBuilder extends WorkspaceJob implements
 		IProgressMonitor monitor = null;
 		String eclipseGradleStr = null;
 		InputStream is;
+		
+		IWorkspaceDescription desc = ws.getDescription();
+		boolean autoBuildConf = desc.isAutoBuilding();
+		desc.setAutoBuilding(false);
+		try {
+			ws.setDescription(desc);
+			// openMsgBox("desc set");
+		} catch (CoreException ex) {
+			ex.printStackTrace();
+		}
+		
+//		try {
+//			ws.getRoot().getProject("trunk").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("platform").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("dataaccess").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("domain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("webdomain-api").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("webdomain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("shared.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("checkout.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("stub").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//			ws.getRoot().getProject("integration.test").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+//		} catch (CoreException e3) {
+//			e3.printStackTrace();
+//		}
+		
 		try {
 			is = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).getContents();
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
@@ -79,36 +106,25 @@ public class ExpBuilder extends WorkspaceJob implements
                 "                        }" + System.getProperty("line.separator") +
                 "                    }";
 	        String s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
-	        		"def slashedProjectRoot = '$projectRoot'.replace('\\', '/')" + System.getProperty("line.separator") + 
+	        		"def slashedProjectRoot = \"$projectRoot\".replace('\\\\', '/')" + System.getProperty("line.separator") + 
 	        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
 	        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
 	        		"it.@path = it.@path.replaceAll('/trunk/' + subproject.name + '/build/resources/test-runtime', '/' + subproject.name + '/build/resources/test-runtime')" + System.getProperty("line.separator") + 
-	        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')"
+	        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')" + System.getProperty("line.separator") + 
+	        		"}"
 	        		);
 			ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle")).setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
 		} catch (CoreException e2) {
+			openMsgBox("replacing classpath error: " + e2.getMessage());
 			e2.printStackTrace();
 		} catch (IOException e) {
+			openMsgBox("replacing classpath error: " + e.getMessage());
 			e.printStackTrace();
 		}
 
-		
-		IWorkspaceDescription desc = ws.getDescription();
-		boolean autoBuildConf = desc.isAutoBuilding();
-		desc.setAutoBuilding(false);
-		try {
-			ws.setDescription(desc);
-			// openMsgBox("desc set");
-		} catch (CoreException ex) {
-			ex.printStackTrace();
-		}
-
-		// log.log(LogService.LOG_WARNING, "starting gradle refresh");
-		// https://github.com/spring-projects/eclipse-integration-gradle/blob/master/org.springsource.ide.eclipse.gradle.ui/src/org/springsource/ide/eclipse/gradle/ui/actions/RefreshAllAction.java
 		try {
 			RefreshAllActionCore.callOn(new ArrayList<IProject>() {
 				{
-					// openMsgBox("gradle start ");
 					add(ws.getRoot().getProject("platform"));
 					add(ws.getRoot().getProject("dataaccess"));
 					add(ws.getRoot().getProject("domain"));
@@ -117,18 +133,15 @@ public class ExpBuilder extends WorkspaceJob implements
 					add(ws.getRoot().getProject("shared.ui"));
 					add(ws.getRoot().getProject("checkout.ui"));
 					add(ws.getRoot().getProject("stub"));
-					add(ws.getRoot().getProject("integration.test"));
-					// openMsgBox("gradle stop ");
+					//add(ws.getRoot().getProject("integration.test"));
 				}
 			}).join();
 		} catch (CoreException e1) {
 			openMsgBox("clean build error " + e1.getMessage());
 			e1.printStackTrace();
 		}
-		// RefreshAllActionCore.callOn(Arrays.asList(ws.getRoot().getProjects()));
-		// log.log(LogService.LOG_WARNING, "completed gradle refresh");
 		catch (Exception e) {
-			// TODO Auto-generated catch block
+			openMsgBox("clean build error " + e.getMessage());
 			e.printStackTrace();
 		}
 
