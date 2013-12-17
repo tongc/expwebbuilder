@@ -66,6 +66,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		ResourceAttributes ra = null;
 		boolean fileIsReadOnly = true;
 		IFile file = null;
+		String s = null;
 		
 		IWorkspaceDescription desc = ws.getDescription();
 		boolean autoBuildConf = desc.isAutoBuilding();
@@ -115,7 +116,7 @@ public class ExpBuilder extends WorkspaceJob implements
 	                "                            classpathNode.remove it" + System.getProperty("line.separator") +
 	                "                        }" + System.getProperty("line.separator") +
 	                "                    }";
-		        String s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
+		        s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
 		        		"def slashedProjectRoot = \"$projectRoot\".replace('\\\\', '/')" + System.getProperty("line.separator") + 
 		        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
 		        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
@@ -158,7 +159,7 @@ public class ExpBuilder extends WorkspaceJob implements
 			e.printStackTrace();
 		}
 
-		if(eclipseGradleStr!=null && eclipseGradleStr.contains("def slashedProjectRoot")) {
+		if(eclipseGradleStr!=null && s.contains("def slashedProjectRoot")) {
 			try {
 				file.setContents(new ByteArrayInputStream(eclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
 				ra.setReadOnly(fileIsReadOnly);
