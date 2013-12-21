@@ -61,12 +61,12 @@ public class ExpBuilder extends WorkspaceJob implements
 	public void run(IAction action) {
 		final IWorkspace ws = ResourcesPlugin.getWorkspace();
 		IProgressMonitor monitor = null;
-		String eclipseGradleStr = null;
+		String originalEclipseGradleStr = null;
 		InputStream is;
 		ResourceAttributes ra = null;
 		boolean fileIsReadOnly = true;
 		IFile file = null;
-		String s = null;
+		String newEclipseGradleStr = null;
 		
 		IWorkspaceDescription desc = ws.getDescription();
 		boolean autoBuildConf = desc.isAutoBuilding();
@@ -104,10 +104,10 @@ public class ExpBuilder extends WorkspaceJob implements
 	            sb.append('\n');
 	            line = in.readLine();
 	        }
-	        eclipseGradleStr = sb.toString();
+	        originalEclipseGradleStr = sb.toString();
 	        ra = file.getResourceAttributes();
 	        fileIsReadOnly = ra.isReadOnly();
-	        if(!eclipseGradleStr.contains("def slashedProjectRoot")) {
+	        if(!originalEclipseGradleStr.contains("def slashedProjectRoot")) {
 	        	ra.setReadOnly(false);
 	        	file.setResourceAttributes(ra);
 		        String strToReplace = 
@@ -116,7 +116,7 @@ public class ExpBuilder extends WorkspaceJob implements
 	                "                            classpathNode.remove it" + System.getProperty("line.separator") +
 	                "                        }" + System.getProperty("line.separator") +
 	                "                    }";
-		        s = eclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
+		        newEclipseGradleStr = originalEclipseGradleStr.replace(strToReplace, strToReplace + System.getProperty("line.separator") +
 		        		"def slashedProjectRoot = \"$projectRoot\".replace('\\\\', '/')" + System.getProperty("line.separator") + 
 		        		"classpathNode.classpathentry.findAll {" + System.getProperty("line.separator") + 
 		        		"it.@path = it.@path.replaceAll(slashedProjectRoot, '/trunk')" + System.getProperty("line.separator") + 
@@ -124,7 +124,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		        		"it.@path = it.@path.replaceAll('/trunk/stub/src', '/stub/src')" + System.getProperty("line.separator") + 
 		        		"}"
 		        		);
-		        file.setContents(new ByteArrayInputStream(s.getBytes()), IFile.KEEP_HISTORY, monitor);
+		        file.setContents(new ByteArrayInputStream(newEclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
 	        }
 		} catch (CoreException e2) {
 			openMsgBox("replacing classpath error: " + e2.getMessage());
@@ -144,6 +144,7 @@ public class ExpBuilder extends WorkspaceJob implements
 					add(ws.getRoot().getProject("webdomain"));
 					add(ws.getRoot().getProject("shared.ui"));
 					add(ws.getRoot().getProject("checkout.ui"));
+					add(ws.getRoot().getProject("api"));
 					add(ws.getRoot().getProject("stub"));
 					//add(ws.getRoot().getProject("integration.test"));
 				}
@@ -157,18 +158,20 @@ public class ExpBuilder extends WorkspaceJob implements
 			e.printStackTrace();
 		}
 
-		if(eclipseGradleStr!=null && s.contains("def slashedProjectRoot")) {
+		if(newEclipseGradleStr!=null) {
 			try {
-				file.setContents(new ByteArrayInputStream(eclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
+				file = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle"));
+				file.setContents(new ByteArrayInputStream(originalEclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
 				ra.setReadOnly(fileIsReadOnly);
 				file.setResourceAttributes(ra);
 			} catch (CoreException e) {
+				openMsgBox("updating eclipse.gradle error " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
 		
 		try {
-			// openMsgBox("starting platform clean build");
+			//openMsgBox("starting platform clean build");
 			cleanAndBuild(ws, "platform", false, monitor);
 			// openMsgBox("starting dataaccess clean build");
 			cleanAndBuild(ws, "dataaccess", false, monitor);
@@ -182,6 +185,8 @@ public class ExpBuilder extends WorkspaceJob implements
 			cleanAndBuild(ws, "shared.ui", true, monitor);
 			// openMsgBox("starting checkout.ui clean build");
 			cleanAndBuild(ws, "checkout.ui", true, monitor);
+			// openMsgBox("starting api clean build");
+			cleanAndBuild(ws, "api", false, monitor);
 			// openMsgBox("starting stub clean build");
 			cleanAndBuild(ws, "stub", false, monitor);
 		} catch (BackingStoreException e) {
@@ -193,9 +198,9 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 		desc.setAutoBuilding(autoBuildConf);
 		try {
-			// openMsgBox("set desc back");
 			ws.setDescription(desc);
 		} catch (CoreException ex) {
+			openMsgBox("updating eclipse.gradle error " + ex.getMessage());
 			ex.printStackTrace();
 		}
 
@@ -205,6 +210,7 @@ public class ExpBuilder extends WorkspaceJob implements
 	private void cleanAndBuild(IWorkspace ws, String projectName,
 			boolean useScalaBuilder, IProgressMonitor monitor)
 			throws BackingStoreException, CoreException {
+		//openMsgBox("building " + projectName);
 		IProject pro = ws.getRoot().getProject(projectName);
 		IScopeContext projectScope = new ProjectScope(pro);
 		Preferences projectNode = projectScope
@@ -215,6 +221,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 		projectNode.flush();
 
+		//openMsgBox("utf-8 " + projectName);
 		pro.setDefaultCharset("UTF-8", monitor);
 		if (useScalaBuilder) {
 			ICommand[] builders = pro.getDescription().getBuildSpec();
@@ -229,7 +236,9 @@ public class ExpBuilder extends WorkspaceJob implements
 			desc.setBuildSpec(newBuilders.toArray(new ICommand[0]));
 			pro.setDescription(desc, monitor);
 		}
+		//openMsgBox("clean " + projectName);
 		pro.build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
+		//openMsgBox("build " + projectName);
 		pro.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 	}
 
