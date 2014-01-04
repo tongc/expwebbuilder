@@ -78,20 +78,21 @@ public class ExpBuilder extends WorkspaceJob implements
 			ex.printStackTrace();
 		}
 		
-//		try {
-//			ws.getRoot().getProject("trunk").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("platform").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("dataaccess").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("domain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("webdomain-api").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("webdomain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("shared.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("checkout.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("stub").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//			ws.getRoot().getProject("integration.test").refreshLocal(IResource.DEPTH_INFINITE, monitor);
-//		} catch (CoreException e3) {
-//			e3.printStackTrace();
-//		}
+		try {
+			ws.getRoot().getProject("trunk").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("platform").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("dataaccess").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("domain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("webdomain-api").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("webdomain").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("shared.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("checkout.ui").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("stub").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			ws.getRoot().getProject("integration.test").refreshLocal(IResource.DEPTH_INFINITE, monitor);
+		} catch (CoreException e3) {
+			openMsgBox("refresh project error: " + e3.getMessage());
+			e3.printStackTrace();
+		}
 		
 		try {
 			file = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle"));
@@ -150,11 +151,11 @@ public class ExpBuilder extends WorkspaceJob implements
 				}
 			}).join();
 		} catch (CoreException e1) {
-			openMsgBox("clean build error " + e1.getMessage());
+			openMsgBox("gradle refresh error " + e1.getMessage());
 			e1.printStackTrace();
 		}
 		catch (Exception e) {
-			openMsgBox("clean build error " + e.getMessage());
+			openMsgBox("gradle refresh error " + e.getMessage());
 			e.printStackTrace();
 		}
 
