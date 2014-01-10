@@ -19,6 +19,13 @@
                toolbarPath="sampleGroup"
                id="simplemenu.actions.Expweb">
          </action>
+         <action
+               label="&amp;Build Expweb with popup logging"
+               class="com.expedia.expweb.eclipse.ExpBuilderLogging"
+               tooltip="Build Expweb with popup logging"
+               menubarPath="expweb/sampleGroup"
+               id="simplemenu.actions.Expweb">
+         </action>
       </actionSet>
    </extension>
 </plugin>

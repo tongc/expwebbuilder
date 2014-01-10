@@ -41,14 +41,14 @@ import javax.inject.Inject;
 
 import org.osgi.service.prefs.BackingStoreException;
 
-public class ExpBuilder extends WorkspaceJob implements
+public class ExpBuilderLogging extends WorkspaceJob implements
 		IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window = null;
 	@Inject
 	private LogService log;
 
-	public ExpBuilder() {
-		super("Expweb builder");
+	public ExpBuilderLogging() {
+		super("Expweb builder with popup logging");
 	}
 
 	private void openMsgBox(String msg) {
@@ -73,13 +73,13 @@ public class ExpBuilder extends WorkspaceJob implements
 		desc.setAutoBuilding(false);
 		try {
 			ws.setDescription(desc);
-			//openMsgBox("auto build off");
+			openMsgBox("auto build off");
 		} catch (CoreException ex) {
 			ex.printStackTrace();
 		}
 		
 		try {
-			//openMsgBox("start refreshing");
+			openMsgBox("start refreshing");
 			ws.getRoot().getProject("trunk").refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			ws.getRoot().getProject("platform").refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			ws.getRoot().getProject("dataaccess").refreshLocal(IResource.DEPTH_INFINITE, monitor);
@@ -96,7 +96,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 		
 		try {
-			//openMsgBox("start updating eclipe.gradle");
+			openMsgBox("start updating eclipe.gradle");
 			file = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle"));
 			is = file.getContents();
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
@@ -138,7 +138,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 
 		try {
-			//openMsgBox("start gradle refresh");
+			openMsgBox("start gradle refresh");
 			RefreshAllActionCore.callOn(new ArrayList<IProject>() {
 				{
 					add(ws.getRoot().getProject("platform"));
@@ -163,7 +163,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 
 		if(newEclipseGradleStr!=null) {
-			//openMsgBox("start restoring eclipse.gradle");
+			openMsgBox("start restoring eclipse.gradle");
 			try {
 				file = ws.getRoot().getProject("trunk").getFile(new Path("/buildtools/gradle-scripts/main-build/eclipse.gradle"));
 				file.setContents(new ByteArrayInputStream(originalEclipseGradleStr.getBytes()), IFile.KEEP_HISTORY, monitor);
@@ -176,23 +176,23 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 		
 		try {
-			//openMsgBox("starting platform clean build");
+			openMsgBox("starting platform clean build");
 			cleanAndBuild(ws, "platform", false, monitor);
-			//openMsgBox("starting dataaccess clean build");
+			openMsgBox("starting dataaccess clean build");
 			cleanAndBuild(ws, "dataaccess", false, monitor);
-			//openMsgBox("starting domain clean build");
+			openMsgBox("starting domain clean build");
 			cleanAndBuild(ws, "domain", true, monitor);
-			//openMsgBox("starting webdomain api clean build");
+			openMsgBox("starting webdomain api clean build");
 			cleanAndBuild(ws, "webdomain-api", false, monitor);
-			//openMsgBox("starting webdomain clean build");
+			openMsgBox("starting webdomain clean build");
 			cleanAndBuild(ws, "webdomain", false, monitor);
-			//openMsgBox("starting shared.ui clean build");
+			openMsgBox("starting shared.ui clean build");
 			cleanAndBuild(ws, "shared.ui", true, monitor);
-			//openMsgBox("starting checkout.ui clean build");
+			openMsgBox("starting checkout.ui clean build");
 			cleanAndBuild(ws, "checkout.ui", true, monitor);
-			//openMsgBox("starting api clean build");
+			openMsgBox("starting api clean build");
 			cleanAndBuild(ws, "api", false, monitor);
-			//openMsgBox("starting stub clean build");
+			openMsgBox("starting stub clean build");
 			cleanAndBuild(ws, "stub", false, monitor);
 		} catch (BackingStoreException e) {
 			openMsgBox("clean build error " + e.getMessage());
@@ -203,7 +203,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		}
 		desc.setAutoBuilding(autoBuildConf);
 		try {
-			//openMsgBox("restoring auto build conf");
+			openMsgBox("restoring auto build conf");
 			ws.setDescription(desc);
 		} catch (CoreException ex) {
 			openMsgBox("updating eclipse.gradle error " + ex.getMessage());
