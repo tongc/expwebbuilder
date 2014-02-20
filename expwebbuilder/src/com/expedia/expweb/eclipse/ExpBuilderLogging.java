@@ -148,8 +148,8 @@ public class ExpBuilderLogging extends WorkspaceJob implements
 					add(ws.getRoot().getProject("webdomain"));
 					add(ws.getRoot().getProject("shared.ui"));
 					add(ws.getRoot().getProject("checkout.ui"));
-					add(ws.getRoot().getProject("api"));
-					add(ws.getRoot().getProject("stub"));
+					//add(ws.getRoot().getProject("api"));
+					//(ws.getRoot().getProject("stub"));
 					//add(ws.getRoot().getProject("integration.test"));
 				}
 			}).join();
@@ -190,10 +190,10 @@ public class ExpBuilderLogging extends WorkspaceJob implements
 			cleanAndBuild(ws, "shared.ui", true, monitor);
 			openMsgBox("starting checkout.ui clean build");
 			cleanAndBuild(ws, "checkout.ui", true, monitor);
-			openMsgBox("starting api clean build");
-			cleanAndBuild(ws, "api", false, monitor);
-			openMsgBox("starting stub clean build");
-			cleanAndBuild(ws, "stub", false, monitor);
+			//openMsgBox("starting api clean build");
+			//(ws, "api", false, monitor);
+			//openMsgBox("starting stub clean build");
+			//cleanAndBuild(ws, "stub", false, monitor);
 		} catch (BackingStoreException e) {
 			openMsgBox("clean build error " + e.getMessage());
 			e.printStackTrace();
@@ -238,6 +238,19 @@ public class ExpBuilderLogging extends WorkspaceJob implements
 					newBuilders.add(command);
 				}
 			}
+			if(newBuilders.size() == 0) {
+				try {
+					updateEclipseProjectFileToAddScalaBuilderAndNature(ws, projectName, monitor);
+					ws.getRoot().getProject(projectName).refreshLocal(IResource.DEPTH_INFINITE, monitor);
+				} catch (Exception e) {
+					openMsgBox("updating .project error " + e.getMessage());
+					e.printStackTrace();
+				}
+			} else {
+				IProjectDescription desc = pro.getDescription();
+				desc.setBuildSpec(newBuilders.toArray(new ICommand[0]));
+				pro.setDescription(desc, monitor);
+			}
 			IProjectDescription desc = pro.getDescription();
 			desc.setBuildSpec(newBuilders.toArray(new ICommand[0]));
 			pro.setDescription(desc, monitor);
@@ -248,6 +261,20 @@ public class ExpBuilderLogging extends WorkspaceJob implements
 		pro.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 	}
 
+	private void updateEclipseProjectFileToAddScalaBuilderAndNature(IWorkspace ws, String projectName, IProgressMonitor monitor) throws CoreException {
+		IProject project = ws.getRoot().getProject(projectName);
+		IProjectDescription desc = project.getDescription();
+		String[] natureIds = desc.getNatureIds();
+		String[] newNatureIds = new String[natureIds.length + 1];
+		System.arraycopy(natureIds, 0, newNatureIds, 0, natureIds.length);
+		newNatureIds[newNatureIds.length - 1] = "org.scala-ide.sdt.core.scalanature";
+		desc.setNatureIds(newNatureIds);
+		ICommand command = desc.newCommand();
+		command.setBuilderName("org.scala-ide.sdt.core.scalabuilder");
+		desc.setBuildSpec(new ICommand[]{command});
+		project.setDescription(desc, monitor);
+	}
+	
 	@Override
 	public void selectionChanged(IAction action, ISelection selection) {
 	}

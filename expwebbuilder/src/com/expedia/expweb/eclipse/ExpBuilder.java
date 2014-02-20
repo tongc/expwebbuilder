@@ -41,6 +41,8 @@ import javax.inject.Inject;
 
 import org.osgi.service.prefs.BackingStoreException;
 
+import scala.actors.threadpool.Arrays;
+
 public class ExpBuilder extends WorkspaceJob implements
 		IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window = null;
@@ -148,8 +150,8 @@ public class ExpBuilder extends WorkspaceJob implements
 					add(ws.getRoot().getProject("webdomain"));
 					add(ws.getRoot().getProject("shared.ui"));
 					add(ws.getRoot().getProject("checkout.ui"));
-					add(ws.getRoot().getProject("api"));
-					add(ws.getRoot().getProject("stub"));
+					//add(ws.getRoot().getProject("api"));
+					//add(ws.getRoot().getProject("stub"));
 					//add(ws.getRoot().getProject("integration.test"));
 				}
 			}).join();
@@ -191,9 +193,9 @@ public class ExpBuilder extends WorkspaceJob implements
 			//openMsgBox("starting checkout.ui clean build");
 			cleanAndBuild(ws, "checkout.ui", true, monitor);
 			//openMsgBox("starting api clean build");
-			cleanAndBuild(ws, "api", false, monitor);
+			//cleanAndBuild(ws, "api", false, monitor);
 			//openMsgBox("starting stub clean build");
-			cleanAndBuild(ws, "stub", false, monitor);
+			//cleanAndBuild(ws, "stub", false, monitor);
 		} catch (BackingStoreException e) {
 			openMsgBox("clean build error " + e.getMessage());
 			e.printStackTrace();
@@ -222,7 +224,7 @@ public class ExpBuilder extends WorkspaceJob implements
 		Preferences projectNode = projectScope
 				.getNode("org.scala-ide.sdt.core");
 		if (projectNode != null) {
-			projectNode.put("compileorder", "JavaThenScala");
+			projectNode.put("compileorder", "Mixed");
 			projectNode.put("scala.compiler.useProjectSettings", "true");
 		}
 		projectNode.flush();
@@ -238,14 +240,38 @@ public class ExpBuilder extends WorkspaceJob implements
 					newBuilders.add(command);
 				}
 			}
-			IProjectDescription desc = pro.getDescription();
-			desc.setBuildSpec(newBuilders.toArray(new ICommand[0]));
-			pro.setDescription(desc, monitor);
+			if(newBuilders.size() == 0) {
+				try {
+					updateEclipseProjectFileToAddScalaBuilderAndNature(ws, projectName, monitor);
+					ws.getRoot().getProject(projectName).refreshLocal(IResource.DEPTH_INFINITE, monitor);
+				} catch (Exception e) {
+					openMsgBox("updating .project error " + e.getMessage());
+					e.printStackTrace();
+				}
+			} else {
+				IProjectDescription desc = pro.getDescription();
+				desc.setBuildSpec(newBuilders.toArray(new ICommand[0]));
+				pro.setDescription(desc, monitor);
+			}
 		}
 		//openMsgBox("clean " + projectName);
 		pro.build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
 		//openMsgBox("build " + projectName);
 		pro.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
+	}
+	
+	private void updateEclipseProjectFileToAddScalaBuilderAndNature(IWorkspace ws, String projectName, IProgressMonitor monitor) throws CoreException {
+		IProject project = ws.getRoot().getProject(projectName);
+		IProjectDescription desc = project.getDescription();
+		String[] natureIds = desc.getNatureIds();
+		String[] newNatureIds = new String[natureIds.length + 1];
+		System.arraycopy(natureIds, 0, newNatureIds, 0, natureIds.length);
+		newNatureIds[newNatureIds.length - 1] = "org.scala-ide.sdt.core.scalanature";
+		desc.setNatureIds(newNatureIds);
+		ICommand command = desc.newCommand();
+		command.setBuilderName("org.scala-ide.sdt.core.scalabuilder");
+		desc.setBuildSpec(new ICommand[]{command});
+		project.setDescription(desc, monitor);
 	}
 
 	@Override

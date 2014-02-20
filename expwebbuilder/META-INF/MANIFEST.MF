@@ -17,5 +17,6 @@ Require-Bundle: org.eclipse.ui,
  org.scala-lang.scala-library
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: org.eclipse.core.resources,
+Import-Package: org.eclipse.core.internal.events,
+ org.eclipse.core.resources,
  org.eclipse.pde.internal.core.plugin
