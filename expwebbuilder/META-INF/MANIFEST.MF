@@ -6,15 +6,14 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: com.expedia.expweb.eclipse.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- org.scala-ide.sdt.core;bundle-version="4.0.0",
+ org.scala-ide.sdt.core;bundle-version="3.0.3",
  org.springsource.ide.eclipse.gradle.core;bundle-version="3.4.0",
  org.springsource.ide.eclipse.gradle.ui;bundle-version="3.4.0",
  org.eclipse.equinox.registry,
  org.eclipse.swt,
  org.eclipse.equinox.preferences,
  org.eclipse.ui.workbench,
- org.eclipse.m2e.maven.runtime,
- org.scala-lang.scala-library
+ org.eclipse.m2e.maven.runtime
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.eclipse.core.internal.events,
